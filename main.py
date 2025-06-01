@@ -6,6 +6,7 @@ import pyrebase
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 import os
+import json
 
 app = Flask(__name__)
 
@@ -24,7 +25,11 @@ firebase_config = {
 }
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("config/serviceAccountKey.json")
+if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'):
+    google_creds = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
+    cred = credentials.Certificate(google_creds)
+else:
+    cred = credentials.Certificate("config/serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
 # Initialize Pyrebase
