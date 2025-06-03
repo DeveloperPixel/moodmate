@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime, timedelta
+from mood_recommendations import MoodRecommendationEngine
 
 app = Flask(__name__)
 
@@ -36,6 +37,9 @@ firebase_admin.initialize_app(cred)
 # Initialize Pyrebase
 firebase = pyrebase.initialize_app(firebase_config)
 pb_auth = firebase.auth()
+
+# Initialize the recommendation engine
+mood_engine = MoodRecommendationEngine()
 
 # Authentication decorator
 def require_auth(f):
@@ -374,17 +378,17 @@ def analyze_emotions():
             analysis['mood_swings'] = intensity_variance > 5
             
             # Generate recommendations
-            if analysis['dominant_emotion'] in ['sad', 'angry', 'anxious']:
-                analysis['recommendations'].append("Consider speaking with a mental health professional")
-                analysis['recommendations'].append("Try mindfulness or meditation exercises")
-            
-            if analysis['mood_swings']:
-                analysis['recommendations'].append("Track sleep patterns and stress triggers")
-                analysis['recommendations'].append("Maintain a regular daily routine")
-            
-            if analysis['dominant_emotion'] in ['happy', 'excited']:
-                analysis['recommendations'].append("Keep up the positive activities")
-                analysis['recommendations'].append("Share your joy with others")
+            if analysis['dominant_emotion']:
+                # Get average intensity for dominant emotion
+                dominant_data = analysis['emotion_distribution'][analysis['dominant_emotion']]
+                recommendations = mood_engine.get_recommendations(
+                    analysis['dominant_emotion'], 
+                    dominant_data['average_intensity']
+                )
+                
+                analysis['recommendations'] = recommendations['actions']
+                analysis['chatbot_suggestion'] = recommendations['chatbot_response']
+                analysis['specific_recommendations'] = recommendations['intensity_specific']
         
         return jsonify({
             'weekly_data': weekly_data,
@@ -409,8 +413,7 @@ def home():
             'update_profile': '/user/profile/ [PUT]',
             'save_emotion': '/api/emotions [POST]',
             'get_emotion_history': '/api/emotions/history?period={week|month|year} [GET]',
-            'analyze_emotions': '/api/emotions/analysis [GET]',
-            'emotion_analysis': '/api/emotions/analysis [GET]'
+            'analyze_emotions': '/api/emotions/analysis [GET]'
         }
     })
 
