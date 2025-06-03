@@ -61,6 +61,8 @@ def require_auth(f):
             
     return decorated_function
 
+DEFAULT_PROFILE_IMAGE = "https://iili.io/FJknc9R.png"
+
 @app.route('/api/register', methods=['POST'])
 def register():
     try:
@@ -68,22 +70,25 @@ def register():
         email = data.get('email')
         password = data.get('password')
         name = data.get('name')
+        photo_url = data.get('photo_url', DEFAULT_PROFILE_IMAGE)  # Add default image
         
         if not email or not password or not name:
             return jsonify({'error': 'Missing required fields'}), 400
         
-        # Create user in Firebase
+        # Create user in Firebase with default photo
         user = auth.create_user(
             email=email,
             password=password,
-            display_name=name
+            display_name=name,
+            photo_url=photo_url
         )
         
         return jsonify({
             'message': 'Successfully registered',
             'user_id': user.uid,
             'email': user.email,
-            'name': user.display_name
+            'name': user.display_name,
+            'photo_url': user.photo_url
         }), 201
     
     except Exception as e:
@@ -165,7 +170,7 @@ def update_profile():
         if 'display_name' in data:
             update_params['display_name'] = data['display_name']
         if 'photo_url' in data:
-            update_params['photo_url'] = data['photo_url']
+            update_params['photo_url'] = data.get('photo_url', DEFAULT_PROFILE_IMAGE)
         
         # Update user in Firebase
         user = auth.update_user(

@@ -227,6 +227,91 @@ GET /api/emotions/analysis
 }
 ```
 
+### 10. Get Emotion Regression Analysis
+```http
+GET /api/emotions/regression
+```
+**Headers**: Authorization Bearer Token
+**Response**:
+```json
+{
+    "period": {
+        "start": "2025-05-27T00:00:00",
+        "end": "2025-06-03T23:59:59"
+    },
+    "regression_analysis": {
+        "trend": "improving",
+        "trend_strength": 0.15,
+        "r_squared": 0.75,
+        "prediction_next_24h": 7.2,
+        "confidence_score": 75.0,
+        "data_points": {
+            "timestamps": [0, 24, 48, 72, 96, 120, 144],
+            "intensities": [5, 6, 6, 7, 7, 8, 8],
+            "predicted_values": [5.2, 5.8, 6.4, 7.0, 7.6, 8.2, 8.8]
+        },
+        "statistics": {
+            "mean_intensity": 6.71,
+            "std_intensity": 1.11,
+            "slope": 0.025,
+            "intercept": 5.1
+        },
+        "recommendations": [
+            "Your mood is showing positive improvement!",
+            "Keep track of activities that might be contributing to this upward trend."
+        ]
+    }
+}
+```
+
+### Enhanced Mood Recommendations
+The API now provides more detailed recommendations based on:
+- Emotion type (happy, sad, angry, anxious)
+- Intensity levels (high, medium, low)
+- Chatbot interaction suggestions
+
+Example response structure in emotion analysis:
+```json
+{
+    "recommendations": {
+        "actions": [
+            "Share your joy with friends or family",
+            "Document what made you happy today",
+            "Express gratitude through journaling"
+        ],
+        "chatbot_suggestion": "I'm so glad you're feeling happy! Would you like to share what made your day special?",
+        "intensity_specific": [
+            "Channel your positive energy into a creative project",
+            "Consider mentoring or helping others",
+            "Start a gratitude journal"
+        ]
+    }
+}
+```
+
+## Mood Categories
+The API supports these primary mood categories with specialized recommendations:
+
+### Happy
+- High Intensity (8-10): Focus on sharing and creative activities
+- Medium Intensity (5-7): Social engagement and memory creation
+- Low Intensity (1-4): Mood maintenance and light activities
+
+### Sad
+- High Intensity (8-10): Professional support and grounding techniques
+- Medium Intensity (5-7): Self-care and gentle activities
+- Low Intensity (1-4): Comfort activities and mild mood elevation
+
+### Angry
+- High Intensity (8-10): Immediate cooling down techniques
+- Medium Intensity (5-7): Physical activities and expression
+- Low Intensity (1-4): Simple calming techniques
+
+### Anxious
+- High Intensity (8-10): Structured coping techniques
+- Medium Intensity (5-7): Mindfulness and physical activity
+- Low Intensity (1-4): Gentle relaxation methods
+
 ## Error Responses
 All endpoints return error responses in this format:
 ```json

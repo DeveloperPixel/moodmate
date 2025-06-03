@@ -126,6 +126,130 @@ class MoodRecommendationEngine:
                         "Practice gentle stretching"
                     ]
                 }
+            },
+            'excited': {
+                'actions': [
+                    "Channel your energy into creative projects",
+                    "Share your excitement with others",
+                    "Plan something you've been wanting to do",
+                    "Write down your ideas and inspirations",
+                    "Try a new physical activity"
+                ],
+                'chatbot_responses': [
+                    "Your enthusiasm is wonderful! What's got you so excited?",
+                    "I love your energy! Want to brainstorm ways to channel it?",
+                    "It's great to see you so energized! What are you looking forward to?"
+                ],
+                'intensity_based_recommendations': {
+                    'high': [
+                        "Focus this energy into achieving a goal",
+                        "Start that project you've been dreaming about",
+                        "Organize a group activity or event"
+                    ],
+                    'medium': [
+                        "Make a vision board or plan",
+                        "Try a new hobby or skill",
+                        "Connect with others who share your interests"
+                    ],
+                    'low': [
+                        "Write down your positive thoughts",
+                        "Listen to upbeat music",
+                        "Take a fun photo or selfie"
+                    ]
+                }
+            },
+            'calm': {
+                'actions': [
+                    "Practice mindful meditation",
+                    "Do gentle yoga or stretching",
+                    "Read a relaxing book",
+                    "Spend time in nature",
+                    "Practice deep breathing"
+                ],
+                'chatbot_responses': [
+                    "You seem peaceful today. Would you like to maintain this tranquility?",
+                    "It's nice to feel calm. What helped you reach this state?",
+                    "Peaceful moments are precious. Shall we explore ways to extend this feeling?"
+                ],
+                'intensity_based_recommendations': {
+                    'high': [
+                        "Start a meditation practice",
+                        "Create a peaceful corner in your space",
+                        "Write reflectively about this feeling"
+                    ],
+                    'medium': [
+                        "Take a mindful walk",
+                        "Practice gratitude",
+                        "Listen to calming music"
+                    ],
+                    'low': [
+                        "Take deep breaths",
+                        "Observe your surroundings",
+                        "Enjoy a quiet moment"
+                    ]
+                }
+            },
+            'confused': {
+                'actions': [
+                    "Break tasks into smaller steps",
+                    "Write down your thoughts",
+                    "Talk to someone you trust",
+                    "Take a break to clear your mind",
+                    "Make a pros and cons list"
+                ],
+                'chatbot_responses': [
+                    "It's okay to feel uncertain. Want to talk through what's confusing you?",
+                    "Let's try to break this down together. What's on your mind?",
+                    "Sometimes things can be overwhelming. Should we organize your thoughts?"
+                ],
+                'intensity_based_recommendations': {
+                    'high': [
+                        "Seek professional guidance",
+                        "Use mind mapping techniques",
+                        "Take a complete break from the situation"
+                    ],
+                    'medium': [
+                        "Write down specific questions",
+                        "Research reliable information",
+                        "Discuss with a mentor or friend"
+                    ],
+                    'low': [
+                        "Take a short walk to clear your head",
+                        "Focus on what you know for sure",
+                        "Make a simple action plan"
+                    ]
+                }
+            },
+            'frustrated': {
+                'actions': [
+                    "Take a short break",
+                    "Express your feelings in writing",
+                    "Do physical exercise",
+                    "Practice problem-solving techniques",
+                    "Use stress-relief tools"
+                ],
+                'chatbot_responses': [
+                    "I can hear your frustration. Would you like to talk about what's bothering you?",
+                    "Sometimes things don't go as planned. How can I help you work through this?",
+                    "Let's take a step back and look at this from a different angle."
+                ],
+                'intensity_based_recommendations': {
+                    'high': [
+                        "Step away from the situation",
+                        "Do intense physical exercise",
+                        "Practice anger management techniques"
+                    ],
+                    'medium': [
+                        "Break the problem into smaller parts",
+                        "Try alternative approaches",
+                        "Talk to someone for perspective"
+                    ],
+                    'low': [
+                        "Take deep breaths",
+                        "List possible solutions",
+                        "Focus on what you can control"
+                    ]
+                }
             }
         }
 
