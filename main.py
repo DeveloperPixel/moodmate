@@ -132,6 +132,52 @@ def protected_route():
         'user_id': user_id
     })
 
+@app.route('/user/profile/', methods=['GET'])
+@require_auth
+def get_profile():
+    try:
+        user_id = request.user['uid']
+        user = auth.get_user(user_id)
+        
+        return jsonify({
+            'user_id': user.uid,
+            'email': user.email,
+            'name': user.display_name,
+            'photo_url': user.photo_url,
+            'email_verified': user.email_verified
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/user/profile/', methods=['PUT'])
+@require_auth
+def update_profile():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        
+        update_params = {}
+        if 'display_name' in data:
+            update_params['display_name'] = data['display_name']
+        if 'photo_url' in data:
+            update_params['photo_url'] = data['photo_url']
+        
+        # Update user in Firebase
+        user = auth.update_user(
+            user_id,
+            **update_params
+        )
+        
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'user_id': user.uid,
+            'email': user.email,
+            'name': user.display_name,
+            'photo_url': user.photo_url
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
@@ -141,7 +187,9 @@ def home():
             'register': '/api/register [POST]',
             'login': '/api/login [POST]',
             'logout': '/api/logout [POST]',
-            'protected': '/api/protected [GET]'
+            'protected': '/api/protected [GET]',
+            'get_profile': '/user/profile/ [GET]',
+            'update_profile': '/user/profile/ [PUT]'
         }
     })
 
