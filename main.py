@@ -280,6 +280,120 @@ def get_emotion_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/api/emotions/analysis', methods=['GET'])
+@require_auth
+def analyze_emotions():
+    try:
+        user_id = request.user['uid']
+        db = firebase.database()
+        
+        # Get last week's data
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
+        
+        # Get emotions from database
+        emotions = db.child('users').child(user_id).child('emotions').get()
+        
+        # Process emotions
+        weekly_data = []
+        emotion_trends = {}
+        daily_intensities = {i: [] for i in range(7)}  # 0-6 for days of week
+        
+        if emotions.each():
+            for emotion in emotions.each():
+                data = emotion.val()
+                emotion_date = datetime.fromisoformat(data['timestamp'])
+                
+                if start_date <= emotion_date <= end_date:
+                    day_of_week = emotion_date.weekday()
+                    
+                    entry = {
+                        'id': emotion.key(),
+                        'emotion': data['emotion'],
+                        'intensity': data['intensity'],
+                        'note': data.get('note', ''),
+                        'timestamp': data['timestamp'],
+                        'day': emotion_date.strftime('%A')
+                    }
+                    
+                    weekly_data.append(entry)
+                    daily_intensities[day_of_week].append(data['intensity'])
+                    
+                    # Track emotion trends
+                    if data['emotion'] not in emotion_trends:
+                        emotion_trends[data['emotion']] = {
+                            'count': 0,
+                            'total_intensity': 0,
+                            'notes': []
+                        }
+                    
+                    emotion_trends[data['emotion']]['count'] += 1
+                    emotion_trends[data['emotion']]['total_intensity'] += data['intensity']
+                    if data.get('note'):
+                        emotion_trends[data['emotion']]['notes'].append(data['note'])
+        
+        # Calculate analysis
+        analysis = {
+            'total_entries': len(weekly_data),
+            'date_range': {
+                'start': start_date.isoformat(),
+                'end': end_date.isoformat()
+            },
+            'dominant_emotion': None,
+            'average_intensity': 0,
+            'daily_mood_pattern': {},
+            'emotion_distribution': {},
+            'mood_swings': False,
+            'recommendations': []
+        }
+        
+        if weekly_data:
+            # Calculate dominant emotion
+            max_count = 0
+            for emotion, data in emotion_trends.items():
+                avg_intensity = data['total_intensity'] / data['count']
+                analysis['emotion_distribution'][emotion] = {
+                    'frequency': data['count'],
+                    'average_intensity': round(avg_intensity, 2),
+                    'percentage': round((data['count'] / len(weekly_data)) * 100, 2)
+                }
+                
+                if data['count'] > max_count:
+                    max_count = data['count']
+                    analysis['dominant_emotion'] = emotion
+            
+            # Calculate daily mood patterns
+            for day, intensities in daily_intensities.items():
+                if intensities:
+                    day_name = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][day]
+                    analysis['daily_mood_pattern'][day_name] = round(sum(intensities) / len(intensities), 2)
+            
+            # Check for mood swings
+            intensity_values = [entry['intensity'] for entry in weekly_data]
+            intensity_variance = max(intensity_values) - min(intensity_values)
+            analysis['mood_swings'] = intensity_variance > 5
+            
+            # Generate recommendations
+            if analysis['dominant_emotion'] in ['sad', 'angry', 'anxious']:
+                analysis['recommendations'].append("Consider speaking with a mental health professional")
+                analysis['recommendations'].append("Try mindfulness or meditation exercises")
+            
+            if analysis['mood_swings']:
+                analysis['recommendations'].append("Track sleep patterns and stress triggers")
+                analysis['recommendations'].append("Maintain a regular daily routine")
+            
+            if analysis['dominant_emotion'] in ['happy', 'excited']:
+                analysis['recommendations'].append("Keep up the positive activities")
+                analysis['recommendations'].append("Share your joy with others")
+        
+        return jsonify({
+            'weekly_data': weekly_data,
+            'analysis': analysis
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 # Update the home endpoint to include new routes
 @app.route('/', methods=['GET'])
 def home():
@@ -294,7 +408,9 @@ def home():
             'get_profile': '/user/profile/ [GET]',
             'update_profile': '/user/profile/ [PUT]',
             'save_emotion': '/api/emotions [POST]',
-            'get_emotion_history': '/api/emotions/history?period={week|month|year} [GET]'
+            'get_emotion_history': '/api/emotions/history?period={week|month|year} [GET]',
+            'analyze_emotions': '/api/emotions/analysis [GET]',
+            'emotion_analysis': '/api/emotions/analysis [GET]'
         }
     })
 
