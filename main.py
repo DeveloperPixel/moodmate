@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 import os
 import json
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -178,6 +179,108 @@ def update_profile():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/api/emotions', methods=['POST'])
+@require_auth
+def save_emotion():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('emotion') or not data.get('intensity'):
+            return jsonify({'error': 'Emotion and intensity are required'}), 400
+            
+        # Get Firebase Realtime Database reference
+        db = firebase.database()
+        
+        # Create emotion data with timestamp as key for better querying
+        emotion_data = {
+            'emotion': data['emotion'],
+            'intensity': int(data['intensity']),  # Ensure integer
+            'note': data.get('note', ''),
+            'timestamp': datetime.now().isoformat(),
+            'user_id': user_id
+        }
+        
+        # Save to Firebase using timestamp as part of the path
+        db.child('users').child(user_id).child('emotions').push(emotion_data)
+        
+        return jsonify({
+            'message': 'Emotion saved successfully',
+            'data': emotion_data
+        }), 201
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/emotions/history', methods=['GET'])
+@require_auth
+def get_emotion_history():
+    try:
+        user_id = request.user['uid']
+        period = request.args.get('period', 'week')  # Default to week
+        
+        # Get Firebase Realtime Database reference
+        db = firebase.database()
+        
+        # Calculate date range
+        end_date = datetime.now()
+        if period == 'week':
+            start_date = end_date - timedelta(days=7)
+        elif period == 'month':
+            start_date = end_date - timedelta(days=30)
+        elif period == 'year':
+            start_date = end_date - timedelta(days=365)
+        else:
+            return jsonify({'error': 'Invalid period'}), 400
+            
+        # Query emotions for the user within date range
+        emotions = db.child('users').child(user_id).child('emotions').get()
+        
+        emotion_history = []
+        if emotions.each():
+            for emotion in emotions.each():
+                data = emotion.val()
+                emotion_date = datetime.fromisoformat(data['timestamp'])
+                
+                if start_date <= emotion_date <= end_date:
+                    emotion_history.append({
+                        'id': emotion.key(),
+                        'emotion': data['emotion'],
+                        'intensity': data['intensity'],
+                        'note': data.get('note', ''),
+                        'timestamp': data['timestamp']
+                    })
+        
+        # Calculate statistics
+        stats = {
+            'total_entries': len(emotion_history),
+            'emotion_frequency': {},
+            'average_intensity': 0
+        }
+        
+        if emotion_history:
+            # Calculate emotion frequency
+            for entry in emotion_history:
+                stats['emotion_frequency'][entry['emotion']] = \
+                    stats['emotion_frequency'].get(entry['emotion'], 0) + 1
+            
+            # Calculate average intensity
+            total_intensity = sum(entry['intensity'] for entry in emotion_history)
+            stats['average_intensity'] = round(total_intensity / len(emotion_history), 2)
+        
+        return jsonify({
+            'period': period,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'emotions': emotion_history,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# Update the home endpoint to include new routes
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
@@ -189,7 +292,9 @@ def home():
             'logout': '/api/logout [POST]',
             'protected': '/api/protected [GET]',
             'get_profile': '/user/profile/ [GET]',
-            'update_profile': '/user/profile/ [PUT]'
+            'update_profile': '/user/profile/ [PUT]',
+            'save_emotion': '/api/emotions [POST]',
+            'get_emotion_history': '/api/emotions/history?period={week|month|year} [GET]'
         }
     })
 
